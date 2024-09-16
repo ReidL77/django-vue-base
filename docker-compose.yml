@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    container_name: backlink_db  # Optional: name the container for easy reference
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./Backend:/app  # Mount the Backend folder to /app in the container
+    ports:
+      - "8001:8001"  # Host port 8001 mapped to container port 8001
+    depends_on:
+      - db
+    env_file:
+      - .env
+    container_name: backlink_backend  # Optional: name the container for easy reference
+    command: >
+      sh -c "/wait-for-it.sh db:5432 -- 
+      && python manage.py makemigrations 
+      && python manage.py migrate 
+      && python manage.py runserver 0.0.0.0:8001"
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./Frontend:/app  # Mount the Frontend folder to /app in the container
+    ports:
+      - "8081:8081"
+    container_name: backlink_frontend  # Optional: name the container for easy reference
+
+volumes:
+  postgres_data:

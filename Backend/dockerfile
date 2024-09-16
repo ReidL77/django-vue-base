@@ -1,0 +1,26 @@
+# Backend/Dockerfile
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED 1
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Download the wait-for-it script directly into the container
+RUN apt-get update && apt-get install -y curl && \
+    curl -o /wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
+    chmod +x /wait-for-it.sh && \
+    apt-get remove -y curl && apt-get autoremove -y
+
+# Copy the requirements file into the container
+COPY requirements.txt /app/
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire backend source code into the container
+COPY . /app/
+
+# Expose the port the application will run on
+EXPOSE 8001
